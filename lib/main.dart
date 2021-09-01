@@ -104,8 +104,8 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Colors.white,
       ),
       debugShowCheckedModeBanner: false,
-      //home: TestPage(),
-      home: currentTokenJWT != null && currentTokenJWT.contains(".") ? HomePage() : LoginPage(),
+      home: WebViewPage(),
+      //home: currentTokenJWT != null && currentTokenJWT.contains(".") ? HomePage() : LoginPage(),
     );
   }
 }
