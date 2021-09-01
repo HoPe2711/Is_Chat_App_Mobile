@@ -79,7 +79,7 @@ class _MyAppState extends State<MyApp> {
       ),
       debugShowCheckedModeBanner: false,
       //home: TestPage(),
-      home: currentTokenJWT.contains(".") ? HomePage() : LoginPage(),
+      home: currentTokenJWT != null && currentTokenJWT.contains(".") ? HomePage() : LoginPage(),
     );
   }
 }
