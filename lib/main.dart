@@ -1,7 +1,10 @@
 
+import 'dart:async';
+
 import 'package:chat_app_ui_b/pages/chat_detail_page.dart';
 import 'package:chat_app_ui_b/pages/home_page.dart';
 import 'package:chat_app_ui_b/pages/login_page.dart';
+import 'package:chat_app_ui_b/pages/splash_screen.dart';
 import 'package:chat_app_ui_b/pages/test_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -47,8 +50,6 @@ void main() async {
   initializeNotification();
 }
 
-
-
 class MyApp extends StatefulWidget {
   @override
   _MyAppState createState() => _MyAppState();
@@ -71,6 +72,29 @@ class _MyAppState extends State<MyApp> {
     currentEmail = prefs.getString("currentEmail");
   }
 
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Flutter Chat App Demo',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        backgroundColor: Colors.white,
+      ),
+      debugShowCheckedModeBanner: false,
+      //home: TestPage(),
+      home: SplashScreen(),
+    );
+  }
+}
+
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({Key key}) : super(key: key);
+
+  @override
+  _MyHomePageState createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
