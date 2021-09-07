@@ -15,7 +15,8 @@ class ProfilePage extends StatefulWidget {
   _ProfilePageState createState() => _ProfilePageState();
 }
 
-changePassword(String oldPassword, String newPassword, String retypePassword) async {
+changePassword(
+    String oldPassword, String newPassword, String retypePassword) async {
   final String apiUrl = host_port + "/backend/auth/changepassword";
 
   final response = await http.post(
@@ -30,11 +31,11 @@ changePassword(String oldPassword, String newPassword, String retypePassword) as
       "retypePassword": retypePassword,
     }),
   );
-  if (response.statusCode == 400){
+  if (response.statusCode == 400) {
     final Map<String, dynamic> responseMap = json.decode(response.body);
     return responseMap['status']['message'];
   }
-  if (response.statusCode == 200){
+  if (response.statusCode == 200) {
     final Map<String, dynamic> responseMap = json.decode(response.body);
     return responseMap['data'];
   } else {
@@ -55,12 +56,31 @@ changeDisplayName(String displayName) async {
       "displayName": displayName,
     }),
   );
-  if (response.statusCode == 200){
+  if (response.statusCode == 200) {
     final Map<String, dynamic> responseMap = json.decode(response.body);
     return responseMap['status']['message'];
   } else {
     return null;
   }
+}
+
+changeAvatar(String filepath, String url) async {
+  var request = http.MultipartRequest('PUT', Uri.parse(url));
+  request.files.add(http.MultipartFile('image',
+      File(filepath).readAsBytes().asStream(), File(filepath).lengthSync(),
+      filename: filepath.split("/").last));
+  request.fields.addAll({"displayName": "$currentUsername"});
+  request.headers.addAll({
+    'Content-Type': 'application/json; charset=UTF-8; multipart/form-data',
+    'Authorization': 'Bearer $currentTokenJWT',
+  });
+  var res = await request.send();
+  if (res.statusCode == 200) {
+    final responseString = await res.stream.bytesToString();
+    final Map<String, dynamic> responseMap = json.decode(responseString);
+    return responseMap['data']['avatar'];
+  }
+  return res.statusCode;
 }
 
 class _ProfilePageState extends State<ProfilePage> {
@@ -70,14 +90,17 @@ class _ProfilePageState extends State<ProfilePage> {
   TextEditingController _newPasswordController = TextEditingController();
   TextEditingController _retypePasswordController = TextEditingController();
 
-
   File _image;
+  String _imagePath;
 
-  Future _getImage() async {
+  _getImage() async {
     var image = await ImagePicker.pickImage(source: ImageSource.gallery);
     setState(() {
       _image = image;
-      //print("_image: $_image");
+    });
+    setState(() {
+      _imagePath = _image.path;
+      print("_imagePath: ....$_imagePath");
     });
   }
 
@@ -87,13 +110,16 @@ class _ProfilePageState extends State<ProfilePage> {
     super.initState();
     getInfor();
   }
+
   getInfor() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
       currentDisplayName = prefs.getString("currentDisplayName");
       currentUsername = prefs.getString("currentUsername");
       currentEmail = prefs.getString("currentEmail");
+      currentNameAvatar = prefs.getString("currentNameAvatar");
     });
+    print(currentNameAvatar);
   }
 
   @override
@@ -120,20 +146,29 @@ class _ProfilePageState extends State<ProfilePage> {
                         children: [
                           _image == null
                               ? CircleAvatar(
-                                  backgroundImage: NetworkImage(
-                                    "https://www.rd.com/wp-content/uploads/2017/09/01-shutterstock_476340928-Irina-Bg.jpg",
-                                  ),
+                                  backgroundImage: currentNameAvatar == "" ||
+                                          currentNameAvatar == null
+                                      ? NetworkImage(
+                                          'https://vnn-imgs-f.vgcloud.vn/2020/03/23/11/trend-avatar-11.jpg')
+                                      : NetworkImage(
+                                          '$host_port/backend/images/$currentNameAvatar',
+                                          headers: {
+                                              'Content-Type':
+                                                  'application/json; charset=UTF-8',
+                                              'Authorization':
+                                                  'Bearer $currentTokenJWT',
+                                            }),
                                   radius: 50.0,
                                 )
                               : CircleAvatar(
-                                  backgroundColor: Colors.white.withOpacity(0),
+                                  backgroundColor: Colors.black.withOpacity(0),
                                   child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(2000),
+                                    borderRadius: BorderRadius.circular(50),
                                     child: Image.file(
                                       _image,
-                                      cacheHeight: 200,
-                                      cacheWidth: 200,
-                                      scale: 1.5,
+                                      cacheWidth: 100,
+                                      cacheHeight: 100,
+                                      //fit: BoxFit.fitHeight,
                                     ),
                                   ),
                                   radius: 50,
@@ -148,8 +183,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                 size: 25,
                               ),
                               tooltip: "Change Avatar",
-                              onPressed: () {
-                                _getImage();
+                              onPressed: () async {
+                                await _getImage();
+                                print(_image);
                               },
                             ),
                           ),
@@ -157,6 +193,31 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                       SizedBox(
                         height: 10.0,
+                      ),
+                      Container(
+                        child: IconButton(
+                          icon: Icon(Icons.save_alt),
+                          onPressed: () async {
+                            SharedPreferences prefs =
+                                await SharedPreferences.getInstance();
+                            await prefs
+                                .setString(
+                                    "currentNameAvatar",
+                                    await changeAvatar(_imagePath,
+                                        "$host_port/backend/auth/profile"))
+                                .then((value) => Fluttertoast.showToast(
+                                    msg: "Save Image Done !",
+                                    toastLength: Toast.LENGTH_LONG,
+                                    gravity: ToastGravity.CENTER,
+                                    timeInSecForIosWeb: 1,
+                                    backgroundColor: Colors.red,
+                                    textColor: Colors.white,
+                                    fontSize: 16.0));
+                            setState(() {
+                              currentNameAvatar = prefs.getString("currentNameAvatar");
+                            });
+                          },
+                        ),
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -171,7 +232,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           IconButton(
                             icon: Icon(Icons.edit),
                             tooltip: "Change Display Name",
-                            onPressed: (){
+                            onPressed: () {
                               showAlertDialog(context);
                             },
                           ),
@@ -344,7 +405,7 @@ class _ProfilePageState extends State<ProfilePage> {
             child: RaisedButton(
                 onPressed: () async {
                   SharedPreferences prefs =
-                  await SharedPreferences.getInstance();
+                      await SharedPreferences.getInstance();
                   prefs.setString("currentTokenJWT", "");
                   currentTokenJWT = "";
                   prefs.clear();
@@ -367,7 +428,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   child: Container(
                     constraints:
-                    BoxConstraints(maxWidth: 300.0, minHeight: 50.0),
+                        BoxConstraints(maxWidth: 300.0, minHeight: 50.0),
                     alignment: Alignment.center,
                     child: Text(
                       "Log out",
@@ -383,12 +444,13 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
     );
   }
+
   showAlertDialog(BuildContext context) {
     // set up the button
     Widget okButton = FlatButton(
       child: Text("Change"),
       onPressed: () async {
-        if(_editingController.text == ""){
+        if (_editingController.text == "") {
           Fluttertoast.showToast(
               msg: "Please fill Display Name",
               toastLength: Toast.LENGTH_LONG,
@@ -396,11 +458,11 @@ class _ProfilePageState extends State<ProfilePage> {
               timeInSecForIosWeb: 1,
               backgroundColor: Colors.red,
               textColor: Colors.white,
-              fontSize: 16.0
-          );
+              fontSize: 16.0);
         } else {
           final String displayName = _editingController.text;
-          final String changeDisplayNameResponse = await changeDisplayName(displayName);
+          final String changeDisplayNameResponse =
+              await changeDisplayName(displayName);
 
           SharedPreferences prefs = await SharedPreferences.getInstance();
           prefs.setString("currentDisplayName", _editingController.text);
@@ -412,8 +474,7 @@ class _ProfilePageState extends State<ProfilePage> {
               timeInSecForIosWeb: 1,
               backgroundColor: Colors.red,
               textColor: Colors.white,
-              fontSize: 16.0
-          );
+              fontSize: 16.0);
           Navigator.of(context).pop();
         }
       },
@@ -459,66 +520,63 @@ class _ProfilePageState extends State<ProfilePage> {
       },
     );
   }
+
   showAlertDialog2(BuildContext context) {
     // set up the button
     Widget okButton = FlatButton(
-      child: Text("Change"),
-      onPressed: () async {
-        if(_oldPasswordController.text == ""){
-          Fluttertoast.showToast(
-              msg: "Please fill old password",
-              toastLength: Toast.LENGTH_LONG,
-              gravity: ToastGravity.CENTER,
-              timeInSecForIosWeb: 1,
-              backgroundColor: Colors.red,
-              textColor: Colors.white,
-              fontSize: 16.0
-          );
-        } else {
-          if(_newPasswordController.text == ""){
+        child: Text("Change"),
+        onPressed: () async {
+          if (_oldPasswordController.text == "") {
             Fluttertoast.showToast(
-                msg: "Please fill new password",
+                msg: "Please fill old password",
                 toastLength: Toast.LENGTH_LONG,
                 gravity: ToastGravity.CENTER,
                 timeInSecForIosWeb: 1,
                 backgroundColor: Colors.red,
                 textColor: Colors.white,
-                fontSize: 16.0
-            );
+                fontSize: 16.0);
           } else {
-            if(_retypePasswordController.text == ""){
+            if (_newPasswordController.text == "") {
               Fluttertoast.showToast(
-                  msg: "Please fill retype password",
+                  msg: "Please fill new password",
                   toastLength: Toast.LENGTH_LONG,
                   gravity: ToastGravity.CENTER,
                   timeInSecForIosWeb: 1,
                   backgroundColor: Colors.red,
                   textColor: Colors.white,
-                  fontSize: 16.0
-              );
+                  fontSize: 16.0);
             } else {
-              final String oldPassword = _oldPasswordController.text;
-              final String newPassword = _newPasswordController.text;
-              final String retypePassword = _retypePasswordController.text;
+              if (_retypePasswordController.text == "") {
+                Fluttertoast.showToast(
+                    msg: "Please fill retype password",
+                    toastLength: Toast.LENGTH_LONG,
+                    gravity: ToastGravity.CENTER,
+                    timeInSecForIosWeb: 1,
+                    backgroundColor: Colors.red,
+                    textColor: Colors.white,
+                    fontSize: 16.0);
+              } else {
+                final String oldPassword = _oldPasswordController.text;
+                final String newPassword = _newPasswordController.text;
+                final String retypePassword = _retypePasswordController.text;
 
-              final String changeResponse = await changePassword(oldPassword, newPassword, retypePassword);
-              Fluttertoast.showToast(
-                  msg: "$changeResponse",
-                  toastLength: Toast.LENGTH_LONG,
-                  gravity: ToastGravity.CENTER,
-                  timeInSecForIosWeb: 1,
-                  backgroundColor: Colors.red,
-                  textColor: Colors.white,
-                  fontSize: 16.0
-              );
-              if(changeResponse.contains("Password has changed !")){
-                Navigator.of(context).pop();
+                final String changeResponse = await changePassword(
+                    oldPassword, newPassword, retypePassword);
+                Fluttertoast.showToast(
+                    msg: "$changeResponse",
+                    toastLength: Toast.LENGTH_LONG,
+                    gravity: ToastGravity.CENTER,
+                    timeInSecForIosWeb: 1,
+                    backgroundColor: Colors.red,
+                    textColor: Colors.white,
+                    fontSize: 16.0);
+                if (changeResponse.contains("Password has changed !")) {
+                  Navigator.of(context).pop();
+                }
               }
             }
           }
-        }
-      }
-    );
+        });
 
     // set up the AlertDialog
     AlertDialog alert = AlertDialog(

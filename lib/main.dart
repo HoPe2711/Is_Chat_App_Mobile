@@ -18,6 +18,7 @@ String currentUserID = "";
 String currentDisplayName = "";
 String currentUsername = "";
 String currentEmail = "";
+String currentNameAvatar = "";
 final socketUrl = host_port + '/backend' + '/ws-message';
 
 FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
@@ -70,6 +71,7 @@ class _MyAppState extends State<MyApp> {
     currentDisplayName = prefs.getString("currentDisplayName");
     currentUsername = prefs.getString("currentUsername");
     currentEmail = prefs.getString("currentEmail");
+    currentNameAvatar = prefs.getString("currentNameAvatar");
   }
 
   @override
@@ -104,8 +106,8 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Colors.white,
       ),
       debugShowCheckedModeBanner: false,
-      home: WebViewPage(),
-      //home: currentTokenJWT != null && currentTokenJWT.contains(".") ? HomePage() : LoginPage(),
+      //home: WebViewPage(),
+      home: currentTokenJWT != null && currentTokenJWT.contains(".") ? HomePage() : LoginPage(),
     );
   }
 }
