@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:chat_app_ui_b/pages/chat_detail_page.dart';
 import 'package:flutter/material.dart';
 
 import 'main.dart';
@@ -6,13 +9,17 @@ class MessageWidget extends StatefulWidget {
   String senderName;
   String content;
   String timestamp;
-  MessageWidget({Key key, this.senderName, this.content, this.timestamp}) : super(key: key);
+  String id;
+  List<PerEmo> listEmotions;
+  MessageWidget({Key key, this.senderName, this.content, this.timestamp, this.id, this.listEmotions}) : super(key: key);
 
   @override
   _MessageWidgetState createState() => _MessageWidgetState();
 }
 
 class _MessageWidgetState extends State<MessageWidget> {
+  List<PerEmo> currentEmo = [];
+  int vt = 0;
   bool pressHeart = false, pressLaugh = false, pressCry = false, pressAngry = false;
   String imageNetWorkHeart = "https://image.flaticon.com/icons/png/512/3237/3237429.png";
   String imageNetWorkLaugh = "https://image.flaticon.com/icons/png/512/742/742920.png";
@@ -41,22 +48,17 @@ class _MessageWidgetState extends State<MessageWidget> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  pressHeart ? Container(
-                    child: Image.network(imageNetWorkHeart),
-                    height: 50, width: 50,
-                  ) : Container(),
-                  pressLaugh ? Container(
-                    child: Image.network(imageNetWorkLaugh),
-                    height: 50, width: 50,
-                  ) : Container(),
-                  pressCry ? Container(
-                    child: Image.network(imageNetWorkCry),
-                    height: 50, width: 50,
-                  ) : Container(),
-                  pressAngry ? Container(
-                    child: Image.network(imageNetWorkAngry),
-                    height: 50, width: 50,
-                  ) : Container(),
+                  widget.listEmotions.length == 0 || widget.listEmotions == null ?
+                  Container() : GestureDetector(
+                    onTap: (){
+                      print(widget.listEmotions.length);
+                      showAlertDialog(context);
+                    },
+                    child: Container(
+                      child: Image.network("https://cdn-icons-png.flaticon.com/128/3062/3062575.png"),
+                      height: 50, width: 50,
+                    ),
+                  ),
 
                   SizedBox(width: 5),
                   Column(
@@ -90,7 +92,11 @@ class _MessageWidgetState extends State<MessageWidget> {
                         ),
                         child: Container(
                           child: TextButton(
+                            onLongPress: (){
+                              showAlertDialog(context);
+                            },
                             onPressed: (){
+                              print("${widget.id}--${widget.senderName}--${widget.content}--${widget.timestamp}--$currentUserID--$currentDisplayName");
                               if(visibilityInf == false){
                                 _changed(true, "inf");
                               } else {
@@ -123,8 +129,9 @@ class _MessageWidgetState extends State<MessageWidget> {
                             children: [
                               IconButton(
                                 icon: Image.network(imageNetWorkHeart),
-                                onPressed: (){
-                                  setState(() {
+                                onPressed: () async {
+                                  await sendEmotion(widget.id, "heart");
+                                  setState(()  {
                                     pressHeart = true;
                                     pressLaugh = pressCry = pressAngry = false;
                                   });
@@ -132,7 +139,8 @@ class _MessageWidgetState extends State<MessageWidget> {
                               ),
                               IconButton(
                                 icon: Image.network(imageNetWorkLaugh),
-                                onPressed: (){
+                                onPressed: () async {
+                                  await sendEmotion(widget.id, "laugh");
                                   setState(() {
                                     pressLaugh = true;
                                     pressHeart = pressCry = pressAngry = false;
@@ -141,7 +149,8 @@ class _MessageWidgetState extends State<MessageWidget> {
                               ),
                               IconButton(
                                 icon: Image.network(imageNetWorkCry),
-                                onPressed: (){
+                                onPressed: () async {
+                                  await sendEmotion(widget.id, "cry");
                                   setState(() {
                                     pressCry = true;
                                     pressLaugh = pressHeart = pressAngry = false;
@@ -150,7 +159,8 @@ class _MessageWidgetState extends State<MessageWidget> {
                               ),
                               IconButton(
                                 icon: Image.network(imageNetWorkAngry),
-                                onPressed: (){
+                                onPressed: () async {
+                                  await sendEmotion(widget.id, "angry");
                                   setState(() {
                                     pressAngry = true;
                                     pressLaugh = pressCry = pressHeart = false;
@@ -261,7 +271,8 @@ class _MessageWidgetState extends State<MessageWidget> {
                             children: [
                               IconButton(
                                 icon: Image.network(imageNetWorkHeart),
-                                onPressed: (){
+                                onPressed: () async {
+                                  await sendEmotion(widget.id, "heart");
                                   setState(() {
                                     pressHeart = true;
                                     pressLaugh = pressCry = pressAngry = false;
@@ -270,8 +281,9 @@ class _MessageWidgetState extends State<MessageWidget> {
                               ),
                               IconButton(
                                 icon: Image.network(imageNetWorkLaugh),
-                                onPressed: (){
-                                  setState(() {
+                                onPressed: () async {
+                                  await sendEmotion(widget.id, "laugh");
+                                   setState(() {
                                     pressLaugh = true;
                                     pressHeart = pressCry = pressAngry = false;
                                   });
@@ -279,7 +291,8 @@ class _MessageWidgetState extends State<MessageWidget> {
                               ),
                               IconButton(
                                 icon: Image.network(imageNetWorkCry),
-                                onPressed: (){
+                                onPressed: () async {
+                                  await sendEmotion(widget.id, "cry");
                                   setState(() {
                                     pressCry = true;
                                     pressLaugh = pressHeart = pressAngry = false;
@@ -288,7 +301,8 @@ class _MessageWidgetState extends State<MessageWidget> {
                               ),
                               IconButton(
                                 icon: Image.network(imageNetWorkAngry),
-                                onPressed: (){
+                                onPressed: () async {
+                                  await sendEmotion(widget.id, "angry");
                                   setState(() {
                                     pressAngry = true;
                                     pressLaugh = pressCry = pressHeart = false;
@@ -301,22 +315,23 @@ class _MessageWidgetState extends State<MessageWidget> {
                       ) : Container(),
                     ],
                   ),
-                  pressHeart ? Container(
-                    child: Image.network(imageNetWorkHeart),
-                    height: 50, width: 50,
-                  ) : Container(),
-                  pressLaugh ? Container(
-                    child: Image.network(imageNetWorkLaugh),
-                    height: 50, width: 50,
-                  ) : Container(),
-                  pressCry ? Container(
-                    child: Image.network(imageNetWorkCry),
-                    height: 50, width: 50,
-                  ) : Container(),
-                  pressAngry ? Container(
-                    child: Image.network(imageNetWorkAngry),
-                    height: 50, width: 50,
-                  ) : Container(),
+                  widget.listEmotions.length == 0 || widget.listEmotions == null ?
+                  Container() : GestureDetector(
+                    onTap: (){
+                      for(int i=0; i < list.messages.length; i++){
+                        if(widget.id == list.messages[i].id){
+                          vt = i;
+                          break;
+                        }
+                      }
+                      print(vt);
+                      showAlertDialog(context);
+                    },
+                    child: Container(
+                      child: Image.network("https://cdn-icons-png.flaticon.com/128/3062/3062575.png"),
+                      height: 50, width: 50,
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -325,4 +340,79 @@ class _MessageWidgetState extends State<MessageWidget> {
       ],
     );
   }
+  sendEmotion(String chatId, String emo) async {
+    if (emo != "") {
+      stompClient.send(
+        destination: "/app/react",
+        body: jsonEncode(<String, String>{
+          "chatId": chatId,
+          "senderId": currentUserID,
+          "senderName": currentDisplayName,
+          "emotion": emo,
+        }),
+      );
+      print("send");
+    }
+  }
+
+  showAlertDialog(BuildContext context) {
+    // set up the button
+    Widget cancelButton = FlatButton(
+      child: Text(""),
+      onPressed: (){
+
+      },
+    );
+
+    // set up the AlertDialog
+    AlertDialog alert = AlertDialog(
+      title: Text("Emotions"),
+      content: Container(
+        width: double.maxFinite,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Divider(),
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height*0.4,
+              ),
+              child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: widget.listEmotions.length,
+                  itemBuilder: (context, index){
+                    return ListTile(
+                        leading: Image.network(
+                            widget.listEmotions[index].emotion == 'heart' ?
+                            "https://image.flaticon.com/icons/png/512/3237/3237429.png" :
+                            widget.listEmotions[index].emotion == 'laugh' ?
+                            "https://image.flaticon.com/icons/png/512/742/742920.png" :
+                            widget.listEmotions[index].emotion == 'cry' ?
+                            "https://image.flaticon.com/icons/png/512/1933/1933788.png" :
+                            "https://image.flaticon.com/icons/png/512/743/743419.png"
+                        ),
+                      //list.messages[vt].listEmotions.last.emotion == 'heart' ? Text(list.messages[vt].listEmotions.last.emotion.toString()),
+                        title: Text(widget.listEmotions[index].senderName.toString()),
+                      );
+                  }
+              ),
+            ),
+            Divider(),
+          ],
+        ),
+      ),
+      actions: [
+        cancelButton,
+      ],
+    );
+
+    // show the dialog
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
+      },
+    );
+  }
+
 }

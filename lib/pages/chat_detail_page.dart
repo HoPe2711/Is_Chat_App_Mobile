@@ -4,6 +4,8 @@ import 'dart:math';
 
 import 'package:chat_app_ui_b/main.dart';
 import 'package:chat_app_ui_b/message_widget.dart';
+import 'package:chat_app_ui_b/models/chat_message_model.dart';
+import 'package:chat_app_ui_b/models/history_chat_model.dart';
 import 'package:chat_app_ui_b/pages/home_page.dart';
 import 'package:chat_app_ui_b/pages/member_page.dart';
 import 'package:emoji_picker/emoji_picker.dart';
@@ -25,57 +27,92 @@ MessList tmp = new MessList();
 void onConnect(StompFrame frame) {
   print("on connect");
   stompClient.subscribe(
-      destination: '/user' + '/$currentUserID' + '/queue/messages',
+      destination: '/queue' + '/$currentUserID',
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $currentTokenJWT',
+      },
       callback: (StompFrame frame) async {
         print("callback");
         if (frame.body != null) {
           Map<String, dynamic> result = json.decode(frame.body);
-          //print(result);
-          if (currentUserID != result['senderId']) {
-            showNotification(
-              result['senderName'],
-              result['chatRoomName'],
-              result['content'],
-              dateFormat.format(new DateTime.fromMillisecondsSinceEpoch(result['timestamp'])).toString(),
-            );
-          }
-          if (positionRoomId == result['chatRoomId']) tmp.messages = list.messages;
-          else getcurrentList(result['chatRoomId']);
+          print(result);
+          if(result['emotion'] == null) {
+            if (currentUserID != result['senderId']) {
+              showNotification(
+                result['senderName'],
+                result['chatRoomName'],
+                result['content'],
+                dateFormat.format(new DateTime.fromMillisecondsSinceEpoch(result['timestamp'])).toString(),
+              );
+            }
+            if (positionRoomId == result['chatRoomId']) tmp.messages = list.messages;
+            else getcurrentList(result['chatRoomId']);
 
-          addItem(
-            result['senderId'],
-            result['senderName'],
-            result['chatRoomId'],
-            result['content'],
-            result['chatRoomName'],
-            //result['timestamp'].toString());
-            dateFormat.format(new DateTime.fromMillisecondsSinceEpoch(result['timestamp'])).toString(),
-          );
-          if (positionRoomId == result['chatRoomId']) {
-            list.messages = tmp.messages;
-            scrollController.animateTo(
-              scrollController.position.maxScrollExtent,
-              duration: Duration(seconds: 1),
-              curve: Curves.fastOutSlowIn,
+            addItem(
+              result['id'],
+              result['senderId'],
+              result['senderName'],
+              result['chatRoomId'],
+              result['content'],
+              result['chatRoomName'],
+              dateFormat.format(new DateTime.fromMillisecondsSinceEpoch(result['timestamp'])).toString(),
+              [],
             );
+            if (positionRoomId == result['chatRoomId']) {
+              list.messages = tmp.messages;
+              //print(list.toJSONEncodable());
+              scrollController.animateTo(
+                scrollController.position.maxScrollExtent,
+                duration: Duration(seconds: 1),
+                curve: Curves.fastOutSlowIn,
+              );
+            }
+          } else {
+            print(result['emotion']);
+            int vt;
+            for(int i=0; i < list.messages.length; i++){
+              if(result['chatId'] == list.messages[i].id){
+                vt = i;
+                break;
+              }
+            }
+            print(vt);
+            if(list.messages[vt].listEmotions == null){
+              list.messages[vt].listEmotions = [];
+            }
+            list.messages[vt].listEmotions.add(PerEmo(
+              senderId: result['senderId'],
+              senderName: result['senderName'],
+              emotion: result['emotion'],
+            ));
+            //print(list.toJSONEncodable());
+            print(list.toJSONEncodable());
+            storage.setItem('${result['chatRoomId']}', list.toJSONEncodable());
           }
         }
       });
 }
 
 class Message {
+  String id;
   String senderId;
   String senderName;
   String chatRoomId;
   String content;
+  List<PerEmo> listEmotions;
+  //PerEmo perEmo;
   String chatRoomName;
   String timestamp;
 
   Message(
       {@required this.senderId,
+      @required this.id,
       @required this.senderName,
       @required this.chatRoomId,
       @required this.content,
+      this.listEmotions,
+        //this.perEmo,
       @required this.chatRoomName,
       @required this.timestamp});
 
@@ -83,9 +120,13 @@ class Message {
     Map<String, dynamic> m = new Map();
 
     m['senderId'] = senderId;
+    m['id'] = id;
     m['senderName'] = senderName;
     m['chatRoomId'] = chatRoomId;
     m['content'] = content;
+    listEmotions == null ? m['listEmotions'] = [] :
+    m['listEmotions'] = List<dynamic>.from(listEmotions.map((x) => x.toJSONEncodable()));
+    //m['perEmo'] = perEmo.toJSONEncodable();
     m['chatRoomName'] = chatRoomName;
     m['timestamp'] = timestamp;
 
@@ -94,18 +135,46 @@ class Message {
 
   factory Message.fromJson(Map<String, dynamic> json) {
     return new Message(
+      id: json['id'].toString(),
       senderId: json['senderId'].toString(),
       senderName: json['senderName'].toString(),
       chatRoomId: json['chatRoomId'].toString(),
       content: json['content'].toString(),
+      listEmotions: List<PerEmo>.from(json["listEmotions"].map((x) => PerEmo.fromJson(x))),
+      //perEmo: PerEmo.fromJson(json['perEmo']),
       chatRoomName: json['chatRoomName'].toString(),
       timestamp: json['timestamp'].toString(),
     );
   }
 }
 
+class PerEmo{
+  String senderId;
+  String senderName;
+  String emotion;
+  PerEmo({this.senderId, this.senderName, this.emotion});
+
+  toJSONEncodable() {
+    Map<String, dynamic> m = new Map();
+
+    m['senderId'] = senderId;
+    m['senderName'] = senderName;
+    m['emotion'] = emotion;
+
+    return m;
+  }
+
+  factory PerEmo.fromJson(Map<String, dynamic> json) {
+    return new PerEmo(
+      senderId: json['senderId'],
+      senderName: json['senderName'],
+      emotion: json['emotion'],
+    );
+  }
+}
+
 class MessList {
-  List<Message> messages = List<Message>(maxLengthMessage);
+  List<Message> messages = List<Message>();
 
   toJSONEncodable() {
     return messages.map((item) {
@@ -126,46 +195,49 @@ final MessList listHistory = MessList();
 
 
 
-getcurrentList(String roomId) async {
+getcurrentList(String roomId){
   tmp.messages = [];
-  //print(storage.getItem('$roomId'));
+  print(storage.getItem('$roomId'));
   var items = storage.getItem('$roomId');
 
   if (items != null) {
     tmp.messages = List<Message>.from(
       (items as List).map(
         (item) => Message(
+          id: item['id'],
           senderId: item['senderId'],
           senderName: item['senderName'],
           chatRoomId: item['chatRoomId'],
           content: item['content'],
+          //listEmotions: item['listEmotions'],
+          listEmotions: List<PerEmo>.from(item['listEmotions'].map((x) => PerEmo.fromJson(x))),
           chatRoomName: item['chatRoomName'],
           timestamp: item['timestamp'],
         ),
       ),
     );
   }
+  list.messages = tmp.messages;
   //print("get list ${list.toJSONEncodable()}");
   if (list.messages == null) {
     list.messages = [];
   }
+  //return tmp.messages;
 }
 
-addItem(String senderId, String senderName, String chatRoomId, String content, String chatRoomName, String timestamp) {
+addItem(String id, String senderId, String senderName, String chatRoomId, String content, String chatRoomName, String timestamp, List<PerEmo> listEmo) {
   //setState(() {
   final item = new Message(
+      id: id,
       senderId: senderId,
       senderName: senderName,
       chatRoomId: chatRoomId,
       content: content,
+      listEmotions: listEmo,
       chatRoomName: chatRoomName,
       timestamp: timestamp);
 
   tmp.messages.insert(0, item);
-  // if(tmp.messages.length == maxLengthMessage){
-  //   tmp.messages.removeLast();
-  // }
-  //});
   saveToStorage(chatRoomId);
 }
 
@@ -225,17 +297,19 @@ Future<List<Message>> loadHistory(String roomId, int touch) async {
       listHistory.messages = List<Message>.from(
         (items as List).map(
               (item) => Message(
+            id: item['id'],
             senderId: item['senderId'],
             senderName: item['senderName'],
             chatRoomId: item['chatRoomId'],
-            content: item['content'],
+            //listEmotions: item['reactList'],
+                listEmotions: List<PerEmo>.from(item['reactList'].map((x) => PerEmo.fromJson(x))),
+                content: item['content'],
             chatRoomName: item['chatRoomName'],
                 timestamp: dateFormat.format(new DateTime.fromMillisecondsSinceEpoch(item['timestamp'])).toString(),
             //timestamp: item['timestamp'].toString(),
           ),
         ),
       );
-      //print(listHistory.toJSONEncodable());
     }
     //print(responseString);
     return listHistory.messages;
@@ -298,14 +372,18 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
     super.initState();
     positionRoomId = widget.roomID;
     getUserID();
-    getcurrentList(widget.roomID);
-    load0();
-  }
-  load0() async {
-    setState(() async {
-      list.messages = await loadHistory(widget.roomID, 0);
+    setState(() {
+      //getcurrentList(widget.roomID);
+    });
+    setState(() {
+      load0(widget.roomID);
     });
   }
+  load0(String roomId) async {
+    list.messages = await loadHistory(roomId, 0);
+    print(list.toJSONEncodable());
+  }
+
 
   getUserID() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -456,180 +534,11 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                                 senderName: list.messages[index].senderName,
                                 content: list.messages[index].content,
                                 timestamp: list.messages[index].timestamp,
+                                id: list.messages[index].id,
+                                listEmotions: list.messages[index].listEmotions,
+                                // lastEmotion: list.messages[index].listEmotions == null ?
+                                // "" : list.messages[index].listEmotions.last.emotion,
                               );
-                              // return Column(
-                              //   children: [
-                              //     Container(
-                              //       child: Column(
-                              //         crossAxisAlignment: CrossAxisAlignment.start,
-                              //         children: [
-                              //           SizedBox(height: 40),
-                              //           currentDisplayName == list.messages[index].senderName ?
-                              //           Row(
-                              //             crossAxisAlignment: CrossAxisAlignment.end,
-                              //             mainAxisAlignment: MainAxisAlignment.end,
-                              //             children: [
-                              //               SizedBox(width: 5),
-                              //               Column(
-                              //                 crossAxisAlignment: CrossAxisAlignment.end,
-                              //                 children: [
-                              //                   visibilityInf ? Text(
-                              //                     "${list.messages[index].senderName}",
-                              //                     style: TextStyle(
-                              //                       color: Colors.blue[900],
-                              //                       fontFamily: "GoblinOne",
-                              //                       fontSize: 15,
-                              //                     ),
-                              //                   ) : Container(),
-                              //                   Container(
-                              //                     decoration: BoxDecoration(
-                              //                       color: Colors.blue[400],
-                              //                       boxShadow: [
-                              //                         BoxShadow(
-                              //                           color: Colors.grey.withOpacity(0.8),
-                              //                           blurRadius: 9,
-                              //                           spreadRadius: 5,
-                              //                           offset: Offset(3, 6),
-                              //                         ),
-                              //                       ],
-                              //                       borderRadius: BorderRadius.only(
-                              //                         topRight: Radius.circular(30),
-                              //                         topLeft:
-                              //                         Radius.circular(30),
-                              //                         bottomLeft: Radius.circular(30),
-                              //                       ),
-                              //                     ),
-                              //                     child: Padding(
-                              //                       padding: const EdgeInsets.all(10),
-                              //                       child: Container(
-                              //                         child: TextButton(
-                              //                           onPressed: (){
-                              //                             if(visibilityInf == false){
-                              //                               _changed(true, "inf");
-                              //                             } else {
-                              //                               _changed(false, "inf");
-                              //                             }
-                              //                           },
-                              //                           child: Text(
-                              //                             "${list.messages[index].content}",
-                              //                             style: TextStyle(
-                              //                               color: Colors.black,
-                              //                               fontWeight:
-                              //                               FontWeight.bold,
-                              //                               fontFamily:
-                              //                               "Times New Roman",
-                              //                               fontSize: 25,
-                              //                             ),
-                              //                           ),
-                              //                         ),
-                              //                       ),
-                              //                     ),
-                              //                   ),
-                              //                   SizedBox(height: 10),
-                              //                   visibilityInf ? Text(
-                              //                     "${list.messages[index].timestamp}",
-                              //                     style: TextStyle(
-                              //                       color: Colors.black,
-                              //                     ),
-                              //                   ) : Container(),
-                              //                 ],
-                              //               ),
-                              //               SizedBox(width: 5),
-                              //               CircleAvatar(
-                              //                 backgroundColor:
-                              //                 Colors.orangeAccent,
-                              //                 child: Text(
-                              //                   "${list.messages[index].senderName.characters.first.toUpperCase()}",
-                              //                   style: TextStyle(
-                              //                     color: Colors.white,
-                              //                     //fontSize: 30,
-                              //                     fontWeight: FontWeight.bold,
-                              //                     fontFamily: "GoblinOne",
-                              //                   ),
-                              //                 ),
-                              //                 radius: 20,
-                              //               ),
-                              //             ],
-                              //           ) :
-                              //           Row(
-                              //             crossAxisAlignment: CrossAxisAlignment.end,
-                              //             mainAxisAlignment: MainAxisAlignment.start,
-                              //             children: [
-                              //               SizedBox(width: 5),
-                              //               CircleAvatar(
-                              //                 backgroundColor: Colors.orangeAccent,
-                              //                 child: Text(
-                              //                   "${list.messages[index].senderName.characters.first.toUpperCase()}",
-                              //                   style: TextStyle(
-                              //                     color: Colors.white,
-                              //                     //fontSize: 30,
-                              //                     fontWeight: FontWeight.bold,
-                              //                     fontFamily: "GoblinOne",
-                              //                   ),
-                              //                 ),
-                              //                 radius: 20,
-                              //               ),
-                              //               SizedBox(width: 5),
-                              //               Column(
-                              //                 crossAxisAlignment:
-                              //                 CrossAxisAlignment.start,
-                              //                 children: [
-                              //                   Text(
-                              //                     "${list.messages[index].senderName}",
-                              //                     style: TextStyle(
-                              //                       color: Colors.blue[900],
-                              //                       fontFamily: "GoblinOne",
-                              //                       fontSize: 15,
-                              //                     ),
-                              //                   ),
-                              //                   Container(
-                              //                     decoration: BoxDecoration(
-                              //                       color: Colors.blue[400],
-                              //                       boxShadow: [
-                              //                         BoxShadow(
-                              //                           color: Colors.grey.withOpacity(0.8),
-                              //                           blurRadius: 9,
-                              //                           spreadRadius: 5,
-                              //                           offset: Offset(3, 6),
-                              //                         ),
-                              //                       ],
-                              //                       borderRadius: BorderRadius.only(
-                              //                         topRight: Radius.circular(30),
-                              //                         bottomRight: Radius.circular(30),
-                              //                         topLeft: Radius.circular(30),
-                              //                       ),
-                              //                     ),
-                              //                     child: Padding(
-                              //                       padding: const EdgeInsets.all(10),
-                              //                       child: Container(
-                              //                         child: Text(
-                              //                           "${list.messages[index].content}",
-                              //                           style: TextStyle(
-                              //                             color: Colors.black,
-                              //                             fontWeight: FontWeight.bold,
-                              //                             fontFamily: "Times New Roman",
-                              //                             fontSize: 25,
-                              //                           ),
-                              //                         ),
-                              //                       ),
-                              //                     ),
-                              //                   ),
-                              //                   SizedBox(height: 10),
-                              //                   Text(
-                              //                     "${list.messages[index].timestamp}",
-                              //                     style: TextStyle(
-                              //                       color: Colors.black,
-                              //                     ),
-                              //                   ),
-                              //                 ],
-                              //               ),
-                              //             ],
-                              //           ),
-                              //         ],
-                              //       ),
-                              //     ),
-                              //   ],
-                              // );
                             },
                           );
                         }),
