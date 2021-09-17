@@ -37,7 +37,7 @@ void onConnect(StompFrame frame) {
         if (frame.body != null) {
           Map<String, dynamic> result = json.decode(frame.body);
           print(result);
-          if(result['emotion'] == null) {
+          if(result['content'] != null) {
             if (currentUserID != result['senderId']) {
               showNotification(
                 result['senderName'],
@@ -68,7 +68,8 @@ void onConnect(StompFrame frame) {
                 curve: Curves.fastOutSlowIn,
               );
             }
-          } else {
+          }
+          if(result['emotion'] != null){
             print(result['emotion']);
             int vt;
             for(int i=0; i < list.messages.length; i++){
@@ -89,6 +90,19 @@ void onConnect(StompFrame frame) {
             //print(list.toJSONEncodable());
             print(list.toJSONEncodable());
             storage.setItem('${result['chatRoomId']}', list.toJSONEncodable());
+          }
+          if(result['delete'] != null){
+            print(result['delete']);
+            int vt;
+            for(int i=0; i < list.messages.length; i++){
+              if(result['chatId'] == list.messages[i].id){
+                vt = i;
+                break;
+              }
+            }
+            print(vt);
+            //list.messages[vt].content = "This message has been deleted!";
+            list.messages.removeAt(vt);
           }
         }
       });
@@ -381,7 +395,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
   }
   load0(String roomId) async {
     list.messages = await loadHistory(roomId, 0);
-    print(list.toJSONEncodable());
+    //print(list.toJSONEncodable());
   }
 
 

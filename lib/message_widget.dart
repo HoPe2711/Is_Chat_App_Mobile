@@ -36,7 +36,8 @@ class _MessageWidgetState extends State<MessageWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return widget.listEmotions == null ? CircularProgressIndicator() :
+      Column(
       children: [
         Container(
           child: Column(
@@ -74,7 +75,8 @@ class _MessageWidgetState extends State<MessageWidget> {
                       ) : Container(),
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.pink[100],
+                          color: widget.content == "This message has been deleted!" ?
+                          Colors.grey : Colors.pink[100],
                           boxShadow: [
                             BoxShadow(
                               color: Colors.grey.withOpacity(0.8),
@@ -127,6 +129,13 @@ class _MessageWidgetState extends State<MessageWidget> {
                           ),
                           Row(
                             children: [
+                              IconButton(
+                                icon: Icon(Icons.delete),
+                                onPressed: (){
+                                  print("${widget.id} -- $currentUserID");
+                                  sendDelete(widget.id, currentUserID);
+                                },
+                              ),
                               IconButton(
                                 icon: Image.network(imageNetWorkHeart),
                                 onPressed: () async {
@@ -222,7 +231,8 @@ class _MessageWidgetState extends State<MessageWidget> {
                       ) : Container(),
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.grey[300],
+                          color: widget.content == "This message has been deleted!" ?
+                          Colors.grey : Colors.grey[300],
                           boxShadow: [
                             BoxShadow(
                               color: Colors.grey.withOpacity(0.8),
@@ -309,6 +319,13 @@ class _MessageWidgetState extends State<MessageWidget> {
                                   });
                                 },
                               ),
+                              IconButton(
+                                icon: Icon(Icons.delete),
+                                onPressed: (){
+                                  print("${widget.id} -- $currentUserID");
+                                  sendDelete(widget.id, currentUserID);
+                                },
+                              ),
                             ],
                           ),
                         ],
@@ -353,6 +370,17 @@ class _MessageWidgetState extends State<MessageWidget> {
       );
       print("send");
     }
+  }
+
+  sendDelete(String chatId, String senderId) async {
+    stompClient.send(
+      destination: "/app/delete_message",
+      body: jsonEncode(<String, String>{
+        "chatId": chatId,
+        "senderId": currentUserID,
+      }),
+    );
+    print("delete");
   }
 
   showAlertDialog(BuildContext context) {
