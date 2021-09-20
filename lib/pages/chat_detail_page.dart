@@ -7,6 +7,7 @@ import 'package:chat_app_ui_b/message_widget.dart';
 import 'package:chat_app_ui_b/models/chat_message_model.dart';
 import 'package:chat_app_ui_b/models/history_chat_model.dart';
 import 'package:chat_app_ui_b/pages/home_page.dart';
+import 'package:chat_app_ui_b/pages/information_room.dart';
 import 'package:chat_app_ui_b/pages/member_page.dart';
 import 'package:emoji_picker/emoji_picker.dart';
 import 'package:flutter/material.dart';
@@ -470,10 +471,11 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                   },
                 ),
                 IconButton(
-                  icon: Icon(Icons.settings),
+                  icon: Icon(Icons.info_rounded),
                   color: Colors.black54,
                   onPressed: () {
-                    print("${widget.roomID}");
+                    //print("${widget.roomID}");
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => InformationRoom(roomImageUrl: widget.roomImageUrl, roomId: widget.roomID, roomName: widget.roomName,)));
                   },
                 ),
               ],

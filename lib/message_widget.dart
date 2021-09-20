@@ -36,10 +36,11 @@ class _MessageWidgetState extends State<MessageWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return widget.listEmotions == null ? CircularProgressIndicator() :
-      Column(
+    return Column(
       children: [
-        Container(
+        widget.listEmotions == null ?
+        Container(child: Center(child: CircularProgressIndicator()))
+            : Container(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
