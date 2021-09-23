@@ -4,8 +4,6 @@ import 'dart:math';
 
 import 'package:chat_app_ui_b/main.dart';
 import 'package:chat_app_ui_b/message_widget.dart';
-import 'package:chat_app_ui_b/models/chat_message_model.dart';
-import 'package:chat_app_ui_b/models/history_chat_model.dart';
 import 'package:chat_app_ui_b/pages/home_page.dart';
 import 'package:chat_app_ui_b/pages/information_room.dart';
 import 'package:chat_app_ui_b/pages/member_page.dart';
@@ -38,17 +36,22 @@ void onConnect(StompFrame frame) {
         if (frame.body != null) {
           Map<String, dynamic> result = json.decode(frame.body);
           print(result);
-          if(result['content'] != null) {
+          if (result['content'] != null) {
             if (currentUserID != result['senderId']) {
               showNotification(
                 result['senderName'],
                 result['chatRoomName'],
                 result['content'],
-                dateFormat.format(new DateTime.fromMillisecondsSinceEpoch(result['timestamp'])).toString(),
+                dateFormat
+                    .format(new DateTime.fromMillisecondsSinceEpoch(
+                        result['timestamp']))
+                    .toString(),
               );
             }
-            if (positionRoomId == result['chatRoomId']) tmp.messages = list.messages;
-            else getcurrentList(result['chatRoomId']);
+            if (positionRoomId == result['chatRoomId'])
+              tmp.messages = list.messages;
+            else
+              getcurrentList(result['chatRoomId']);
 
             addItem(
               result['id'],
@@ -57,30 +60,34 @@ void onConnect(StompFrame frame) {
               result['chatRoomId'],
               result['content'],
               result['chatRoomName'],
-              dateFormat.format(new DateTime.fromMillisecondsSinceEpoch(result['timestamp'])).toString(),
+              dateFormat
+                  .format(new DateTime.fromMillisecondsSinceEpoch(
+                      result['timestamp']))
+                  .toString(),
               [],
             );
             if (positionRoomId == result['chatRoomId']) {
               list.messages = tmp.messages;
-              //print(list.toJSONEncodable());
-              scrollController.animateTo(
-                scrollController.position.maxScrollExtent,
-                duration: Duration(seconds: 1),
-                curve: Curves.fastOutSlowIn,
-              );
+              if(result['senderId'] != currentUserID){
+                scrollController.animateTo(
+                  0.0,
+                  duration: Duration(seconds: 1),
+                  curve: Curves.fastOutSlowIn,
+                );
+              }
             }
           }
-          if(result['emotion'] != null){
+          if (result['emotion'] != null) {
             print(result['emotion']);
             int vt;
-            for(int i=0; i < list.messages.length; i++){
-              if(result['chatId'] == list.messages[i].id){
+            for (int i = 0; i < list.messages.length; i++) {
+              if (result['chatId'] == list.messages[i].id) {
                 vt = i;
                 break;
               }
             }
             print(vt);
-            if(list.messages[vt].listEmotions == null){
+            if (list.messages[vt].listEmotions == null) {
               list.messages[vt].listEmotions = [];
             }
             list.messages[vt].listEmotions.add(PerEmo(
@@ -92,11 +99,11 @@ void onConnect(StompFrame frame) {
             print(list.toJSONEncodable());
             storage.setItem('${result['chatRoomId']}', list.toJSONEncodable());
           }
-          if(result['delete'] != null){
+          if (result['delete'] != null) {
             print(result['delete']);
             int vt;
-            for(int i=0; i < list.messages.length; i++){
-              if(result['chatId'] == list.messages[i].id){
+            for (int i = 0; i < list.messages.length; i++) {
+              if (result['chatId'] == list.messages[i].id) {
                 vt = i;
                 break;
               }
@@ -127,7 +134,7 @@ class Message {
       @required this.chatRoomId,
       @required this.content,
       this.listEmotions,
-        //this.perEmo,
+      //this.perEmo,
       @required this.chatRoomName,
       @required this.timestamp});
 
@@ -139,8 +146,10 @@ class Message {
     m['senderName'] = senderName;
     m['chatRoomId'] = chatRoomId;
     m['content'] = content;
-    listEmotions == null ? m['listEmotions'] = [] :
-    m['listEmotions'] = List<dynamic>.from(listEmotions.map((x) => x.toJSONEncodable()));
+    listEmotions == null
+        ? m['listEmotions'] = []
+        : m['listEmotions'] =
+            List<dynamic>.from(listEmotions.map((x) => x.toJSONEncodable()));
     //m['perEmo'] = perEmo.toJSONEncodable();
     m['chatRoomName'] = chatRoomName;
     m['timestamp'] = timestamp;
@@ -155,7 +164,8 @@ class Message {
       senderName: json['senderName'].toString(),
       chatRoomId: json['chatRoomId'].toString(),
       content: json['content'].toString(),
-      listEmotions: List<PerEmo>.from(json["listEmotions"].map((x) => PerEmo.fromJson(x))),
+      listEmotions: List<PerEmo>.from(
+          json["listEmotions"].map((x) => PerEmo.fromJson(x))),
       //perEmo: PerEmo.fromJson(json['perEmo']),
       chatRoomName: json['chatRoomName'].toString(),
       timestamp: json['timestamp'].toString(),
@@ -163,7 +173,7 @@ class Message {
   }
 }
 
-class PerEmo{
+class PerEmo {
   String senderId;
   String senderName;
   String emotion;
@@ -208,9 +218,7 @@ TextEditingController _inputController = TextEditingController();
 
 final MessList listHistory = MessList();
 
-
-
-getcurrentList(String roomId){
+getcurrentList(String roomId) {
   tmp.messages = [];
   print(storage.getItem('$roomId'));
   var items = storage.getItem('$roomId');
@@ -225,7 +233,8 @@ getcurrentList(String roomId){
           chatRoomId: item['chatRoomId'],
           content: item['content'],
           //listEmotions: item['listEmotions'],
-          listEmotions: List<PerEmo>.from(item['listEmotions'].map((x) => PerEmo.fromJson(x))),
+          listEmotions: List<PerEmo>.from(
+              item['listEmotions'].map((x) => PerEmo.fromJson(x))),
           chatRoomName: item['chatRoomName'],
           timestamp: item['timestamp'],
         ),
@@ -240,7 +249,15 @@ getcurrentList(String roomId){
   //return tmp.messages;
 }
 
-addItem(String id, String senderId, String senderName, String chatRoomId, String content, String chatRoomName, String timestamp, List<PerEmo> listEmo) {
+addItem(
+    String id,
+    String senderId,
+    String senderName,
+    String chatRoomId,
+    String content,
+    String chatRoomName,
+    String timestamp,
+    List<PerEmo> listEmo) {
   //setState(() {
   final item = new Message(
       id: id,
@@ -258,13 +275,14 @@ addItem(String id, String senderId, String senderName, String chatRoomId, String
 
 saveToStorage(String chatRoomId) {
   MessList msg = new MessList();
-  for (int i=0; i< min(tmp.messages.length, maxLengthMessage) ; i++){
+  for (int i = 0; i < min(tmp.messages.length, maxLengthMessage); i++) {
     msg.messages.add(tmp.messages[i]);
   }
   storage.setItem('$chatRoomId', msg.toJSONEncodable());
 }
 
-showNotification(String senderName, String chatRoomName, String content, String timestamp) async {
+showNotification(String senderName, String chatRoomName, String content,
+    String timestamp) async {
   var android = new AndroidNotificationDetails(
       'channel id', 'channel NAME', 'CHANNEL DESCRIPTION',
       priority: Priority.high, importance: Importance.max);
@@ -311,16 +329,20 @@ Future<List<Message>> loadHistory(String roomId, int touch) async {
     if (items != null) {
       listHistory.messages = List<Message>.from(
         (items as List).map(
-              (item) => Message(
+          (item) => Message(
             id: item['id'],
             senderId: item['senderId'],
             senderName: item['senderName'],
             chatRoomId: item['chatRoomId'],
             //listEmotions: item['reactList'],
-                listEmotions: List<PerEmo>.from(item['reactList'].map((x) => PerEmo.fromJson(x))),
-                content: item['content'],
+            listEmotions: List<PerEmo>.from(
+                item['reactList'].map((x) => PerEmo.fromJson(x))),
+            content: item['content'],
             chatRoomName: item['chatRoomName'],
-                timestamp: dateFormat.format(new DateTime.fromMillisecondsSinceEpoch(item['timestamp'])).toString(),
+            timestamp: dateFormat
+                .format(
+                    new DateTime.fromMillisecondsSinceEpoch(item['timestamp']))
+                .toString(),
             //timestamp: item['timestamp'].toString(),
           ),
         ),
@@ -338,7 +360,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
   bool visibilityInf = false;
   void _changed(bool visibility, String field) {
     setState(() {
-      if (field == "inf"){
+      if (field == "inf") {
         visibilityInf = visibility;
       }
     });
@@ -394,11 +416,11 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
       load0(widget.roomID);
     });
   }
+
   load0(String roomId) async {
     list.messages = await loadHistory(roomId, 0);
     //print(list.toJSONEncodable());
   }
-
 
   getUserID() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -475,7 +497,14 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                   color: Colors.black54,
                   onPressed: () {
                     //print("${widget.roomID}");
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => InformationRoom(roomImageUrl: widget.roomImageUrl, roomId: widget.roomID, roomName: widget.roomName,)));
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => InformationRoom(
+                                  roomImageUrl: widget.roomImageUrl,
+                                  roomId: widget.roomID,
+                                  roomName: widget.roomName,
+                                )));
                   },
                 ),
               ],
@@ -539,8 +568,10 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                                       setState(() {
                                         touch++;
                                       });
-                                      listHistory.messages = await loadHistory(widget.roomID, touch);
-                                      list.messages.addAll(listHistory.messages);
+                                      listHistory.messages = await loadHistory(
+                                          widget.roomID, touch);
+                                      list.messages
+                                          .addAll(listHistory.messages);
                                     },
                                     child: Text("More message ..."),
                                   ),
@@ -598,11 +629,6 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                               },
                               tooltip: 'Send',
                             ),
-                            // IconButton(
-                            //   icon: Icon(Icons.delete),
-                            //   onPressed: _clearStorage,
-                            //   tooltip: 'Clear storage',
-                            // ),
                           ],
                         ),
                       ),
@@ -643,5 +669,4 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
           }),
     );
   }
-
 }

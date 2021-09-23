@@ -84,6 +84,13 @@ class _InformationRoomState extends State<InformationRoom> {
 
   showAlertDialog(BuildContext context) {
     // set up the button
+    Widget cancelButton = TextButton(
+        child: Text("Cancel"),
+        onPressed:  () {
+          _searchTextController.clear();
+          Navigator.of(context, rootNavigator: true).pop('dialog');
+        },
+    );
     Widget searchButton = TextButton(
       child: Text("Search"),
       onPressed: (){
@@ -95,7 +102,8 @@ class _InformationRoomState extends State<InformationRoom> {
             backgroundColor: Colors.red,
             textColor: Colors.white,
             fontSize: 16.0)
-        : Navigator.push(context, MaterialPageRoute(builder: (context) => DisplaySearchMessage(roomName: widget.roomName, roomId: widget.roomId, textSearch: _searchTextController.text, roomImageUrl: widget.roomImageUrl,))).then((value) => _searchTextController.clear());
+        : Navigator.of(context, rootNavigator: true).pop('dialog');
+        Navigator.push(context, MaterialPageRoute(builder: (context) => DisplaySearchMessage(roomName: widget.roomName, roomId: widget.roomId, textSearch: _searchTextController.text, roomImageUrl: widget.roomImageUrl,))).then((value) => _searchTextController.clear());
       },
     );
 
@@ -106,6 +114,7 @@ class _InformationRoomState extends State<InformationRoom> {
         controller: _searchTextController,
       ),
       actions: [
+        cancelButton,
         searchButton,
       ],
     );

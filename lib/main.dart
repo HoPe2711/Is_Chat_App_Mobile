@@ -1,11 +1,9 @@
 
-import 'dart:async';
 
 import 'package:chat_app_ui_b/pages/chat_detail_page.dart';
 import 'package:chat_app_ui_b/pages/home_page.dart';
 import 'package:chat_app_ui_b/pages/login_page.dart';
 import 'package:chat_app_ui_b/pages/splash_screen.dart';
-import 'package:chat_app_ui_b/pages/test_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';

@@ -1,7 +1,6 @@
 
 import 'package:chat_app_ui_b/main.dart';
 import 'package:chat_app_ui_b/models/find_display_name_model.dart';
-import 'package:chat_app_ui_b/pages/member_page.dart';
 import 'package:chat_app_ui_b/title_add_user_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;

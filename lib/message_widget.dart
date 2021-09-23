@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:chat_app_ui_b/pages/chat_detail_page.dart';
+import 'package:chat_app_ui_b/pages/display_search_message.dart';
 import 'package:flutter/material.dart';
 
 import 'main.dart';
