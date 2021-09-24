@@ -209,7 +209,7 @@ class MessList {
 }
 
 final MessList list = new MessList();
-final LocalStorage storage = new LocalStorage('todo_app');
+
 
 StompClient stompClient;
 

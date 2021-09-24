@@ -1,13 +1,18 @@
 
 
+import 'package:chat_app_ui_b/pages/audio_call_with_image.dart';
 import 'package:chat_app_ui_b/pages/chat_detail_page.dart';
+import 'package:chat_app_ui_b/pages/dial_screen.dart';
+import 'package:chat_app_ui_b/pages/group_call.dart';
 import 'package:chat_app_ui_b/pages/home_page.dart';
 import 'package:chat_app_ui_b/pages/login_page.dart';
 import 'package:chat_app_ui_b/pages/splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:localstorage/localstorage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+final LocalStorage storage = new LocalStorage('todo_app');
 Color backgroundColor = Colors.white;
 Color textColor = Colors.black;
 final String host_port = "http://25.30.10.3:8080";
@@ -81,8 +86,8 @@ class _MyAppState extends State<MyApp> {
         backgroundColor: Colors.white,
       ),
       debugShowCheckedModeBanner: false,
-      //home: TestPage(),
-      home: SplashScreen(),
+      //home: SplashScreen(),
+      home: GroupCallScreen(),
     );
   }
 }

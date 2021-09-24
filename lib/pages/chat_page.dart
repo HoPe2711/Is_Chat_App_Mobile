@@ -191,51 +191,51 @@ class _ChatPageState extends State<ChatPage> {
               ),
             ),
             _allRoom == null ? SafeArea(child: Center(child: CircularProgressIndicator()))
-            : _searchRoom == null ?
+                : _searchRoom == null ?
             StreamBuilder(
-              stream: _clock(),
-              builder: (context, snapshot) {
-                return ListView.builder(
-                  //itemCount: chatUsers.length,
-                  itemCount: _allRoom.data.length,
-                  //reverse: true,
-                  shrinkWrap: true,
-                  padding: EdgeInsets.only(top: 16),
-                  physics: NeverScrollableScrollPhysics(),
-                  itemBuilder: (context, index){
-                    return ConversationList(
-                      roomID: _allRoom.data[index].id,
-                      roomName: _allRoom.data[index].roomName,
-                      messageText: _allRoom.data[index].content == null ? "No message in hear !"
-                          : "${_allRoom.data[index].senderName}: ${_allRoom.data[index].content}",
-                      roomImageUrl: "https://i1.wp.com/roohentertainment.com/wp-content/uploads/2018/06/user-avatar-1.png?ssl=1",
-                      time: _allRoom.data[index].timestamp == null ? ""
-                          : dateFormat.format(new DateTime.fromMillisecondsSinceEpoch(_allRoom.data[index].timestamp)).toString(),
-                      isMessageRead: true,
-                    );
-                  },
-                );
-              }
+                stream: _clock(),
+                builder: (context, snapshot) {
+                  return ListView.builder(
+                    //itemCount: chatUsers.length,
+                    itemCount: _allRoom.data.length,
+                    //reverse: true,
+                    shrinkWrap: true,
+                    padding: EdgeInsets.only(top: 16),
+                    physics: NeverScrollableScrollPhysics(),
+                    itemBuilder: (context, index){
+                      return ConversationList(
+                        roomID: _allRoom.data[index].id,
+                        roomName: _allRoom.data[index].roomName,
+                        messageText: _allRoom.data[index].content == null ? "No message in hear !"
+                            : "${_allRoom.data[index].senderName}: ${_allRoom.data[index].content}",
+                        roomImageUrl: "https://i1.wp.com/roohentertainment.com/wp-content/uploads/2018/06/user-avatar-1.png?ssl=1",
+                        time: _allRoom.data[index].timestamp == null ? ""
+                            : dateFormat.format(new DateTime.fromMillisecondsSinceEpoch(_allRoom.data[index].timestamp)).toString(),
+                        isMessageRead: true,
+                      );
+                    },
+                  );
+                }
             ) : ListView.builder(
-                  //itemCount: chatUsers.length,
-                  itemCount: _searchRoom.data.length,
-                  //reverse: true,
-                  shrinkWrap: true,
-                  padding: EdgeInsets.only(top: 16),
-                  physics: NeverScrollableScrollPhysics(),
-                  itemBuilder: (context, index){
-                    return ConversationList(
-                      roomID: _searchRoom.data[index].id,
-                      roomName: _searchRoom.data[index].roomName,
-                      messageText: _searchRoom.data[index].content == null ? "No message in hear !"
-                          : "${_searchRoom.data[index].senderName}: ${_searchRoom.data[index].content}",
-                      roomImageUrl: "https://i1.wp.com/roohentertainment.com/wp-content/uploads/2018/06/user-avatar-1.png?ssl=1",
-                      time: _searchRoom.data[index].timestamp == null ? ""
-                          : dateFormat.format(new DateTime.fromMillisecondsSinceEpoch(_searchRoom.data[index].timestamp)).toString(),
-                      isMessageRead: true,
-                    );
-                  },
-                ),
+              //itemCount: chatUsers.length,
+              itemCount: _searchRoom.data.length,
+              //reverse: true,
+              shrinkWrap: true,
+              padding: EdgeInsets.only(top: 16),
+              physics: NeverScrollableScrollPhysics(),
+              itemBuilder: (context, index){
+                return ConversationList(
+                  roomID: _searchRoom.data[index].id,
+                  roomName: _searchRoom.data[index].roomName,
+                  messageText: _searchRoom.data[index].content == null ? "No message in hear !"
+                      : "${_searchRoom.data[index].senderName}: ${_searchRoom.data[index].content}",
+                  roomImageUrl: "https://i1.wp.com/roohentertainment.com/wp-content/uploads/2018/06/user-avatar-1.png?ssl=1",
+                  time: _searchRoom.data[index].timestamp == null ? ""
+                      : dateFormat.format(new DateTime.fromMillisecondsSinceEpoch(_searchRoom.data[index].timestamp)).toString(),
+                  isMessageRead: true,
+                );
+              },
+            ),
           ],
         ),
       ),
